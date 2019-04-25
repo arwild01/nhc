@@ -11,10 +11,10 @@ Version: @VERSION@
 Release: 1%{?dist}
 License: US Dept. of Energy (BSD-like)
 Group: Applications/System
-URL: https://github.com/mej/nhc/
-Source: https://github.com/mej/nhc/archive/%{name}-%{version}.tar.gz
-Packager: %{?_packager}%{!?_packager:Michael Jennings <mej@lbl.gov>}
-Vendor: %{?_vendorinfo}%{!?_vendorinfo:LBNL NHC Project (https://github.com/mej/nhc/)}
+URL: https://github.com/arwild01/nhc/
+Source: https://github.com/arwild01/nhc/archive/%{name}-%{version}.tar.gz
+Packager: %{?_packager}%{!?_packager:Alan Wild <alan.r.wild@exxonmobil.com>}
+Vendor: %{?_vendorinfo}%{!?_vendorinfo:ExxonMobil Fork of LBNL NHC Project}
 Requires: bash
 Obsoletes: warewulf-nhc <= 1.4.2-1
 BuildArch: noarch
