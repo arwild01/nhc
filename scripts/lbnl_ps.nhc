@@ -39,6 +39,8 @@ function nhc_ps_gather_data() {
     # Set default for $RM_DAEMON_MATCH based on configured resource manager.
     if [[ "$NHC_RM" == "pbs" ]]; then
         RM_DAEMON_MATCH="${RM_DAEMON_MATCH:-/\bpbs_mom\b/}"
+    elif [[ "$NHC_RM" == "pbspro" ]]; then
+        RM_DAEMON_MATCH="${RM_DAEMON_MATCH:-/\bpbs_mom\b/}"
     elif [[ "$NHC_RM" == "slurm" ]]; then
         RM_DAEMON_MATCH="${RM_DAEMON_MATCH:-/\bslurmstepd\b/}"
     elif [[ "$NHC_RM" == "sge" ]]; then

@@ -51,6 +51,43 @@ function nhc_job_find_users() {
             done < "$JOBFILE"
             ### Remove the redirection from the next line if needed for debugging the parsing loop above.
         done 2>/dev/null || :
+    elif [[ "$NHC_RM" == "pbspro" ]]; then
+        PBS_SERVER_HOME="${PBS_SERVER_HOME:-/var/spool/pbs}"
+        JOBFILE_PATH="${JOBFILE_PATH:-$PBS_SERVER_HOME/mom_priv/jobs}"
+        JOBLIST=( $JOBFILE_PATH/*.JB )
+        dbg "Found ${#JOBLIST[*]} job files in $JOBFILE_PATH"
+        if [[ ${#JOBLIST[*]} -eq 1 && ! -f "${JOBLIST[0]}" && -d $PWD/jobs ]]; then
+            JOBLIST=( $PWD/jobs/*.JB )
+            dbg "Found ${#JOBLIST[*]} job files in $PWD/jobs"
+        fi
+        for JOBFILE in "${JOBLIST[@]}" ; do
+            PBS_XML=0
+            if [[ ! -f "$JOBFILE" ]]; then
+                continue
+            fi
+            while read LINE ; do
+                if [[ $PBS_XML -eq 1 ]]; then
+                    JOBUSER="${LINE%%</euser>}"
+                    if [[ ${#JOBUSER} -eq ${#LINE} ]]; then
+                        continue
+                    fi
+                    JOBUSER="${JOBUSER##*<euser*>}"
+                elif [[ "${LINE##<\?xml}" != "$LINE" ]]; then
+                    PBS_XML=1
+                    continue
+                else
+                    JOBUSER=${LINE##PBS_O_LOGNAME=}
+                    if [[ ${#JOBUSER} -eq ${#LINE} ]]; then
+                        continue
+                    fi
+                fi
+                if [[ "${JOBUSERS[*]//$JOBUSER}" = "${JOBUSERS[*]}" ]]; then
+                    JOBUSERS[${#JOBUSERS[*]}]="$JOBUSER"
+                fi
+                break
+            done < "$JOBFILE"
+            ### Remove the redirection from the next line if needed for debugging the parsing loop above.
+        done 2>/dev/null || :
     elif [[ "$NHC_RM" == "slurm" ]]; then
         SLURM_SERVER_HOME="${SLURM_SERVER_HOME:-/var/spool/slurmd}"
         JOBFILE_PATH="${JOBFILE_PATH:-$SLURM_SERVER_HOME}"

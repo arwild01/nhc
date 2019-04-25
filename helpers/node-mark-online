@@ -47,6 +47,62 @@ if [[ "$NHC_RM" == "pbs" ]]; then
     echo "$0:  Skipping $STATUS node $HOSTNAME ($OLD_NOTE_LEADER $OLD_NOTE)"
 
 
+### PBSPro
+elif [[ "$NHC_RM" == "pbspro" ]]; then
+    PBSNODES="${PBSNODES:-pbsnodes}"
+    PBSNODES_LIST_ARGS="${PBSNODES_LIST_ARGS:--Fdsv}"
+    QMGR="${QMGR:-qmgr}"
+
+    #
+    # PBSPro 13.x and newer with -Fdsv produces all node information in a
+    # deliminator seperated value format.  Default deliminator is a pipe
+    # character.
+    #
+    IFS='|'
+    FIELDS=( $($PBSNODES $PBSNODES_LIST_ARGS $HOSTNAME) )
+    IFS=$' \t\n'
+
+    STATUS=
+    OLD_NOTE_LEADER=
+    OLD_NOTE=
+
+    for (( i=0; $i < ${#FIELDS[@]}; i++ )); {
+	if [[ "${FIELDS[i]%%=*}" == state ]]; then
+		STATUS="${FIELDS[i]#*=}"
+
+	elif [[ "${FIELDS[i]%%=*}" == comment ]]; then
+		LINE=( ${FIELDS[i]#*=} )
+		OLD_NOTE_LEADER="${LINE[0]}"
+		OLD_NOTE="${LINE[*]:1}"
+	fi
+
+	if [[ -n "$STATUS" ]] && [[ -n "$OLD_NOTE_LEADER" ]]; then
+		break
+	fi
+    }
+
+    case "$STATUS" in
+	*offline*)
+	    # If there is no old note, and we've not been told to ignore that, do not online the node.
+	    if [[ -z "$OLD_NOTE_LEADER" && "$IGNORE_EMPTY_NOTE" != "1" ]]; then
+		echo "$0:  Not onlining $HOSTNAME:  No note set."
+		exit 0
+	    fi
+	    # If there IS an old note, but it wasn't set by NHC, do not online the node.
+	    if [[ -n "$OLD_NOTE_LEADER" && "$OLD_NOTE_LEADER" != "$LEADER" ]]; then
+		echo "$0:  Not onlining $HOSTNAME:  Offline for non-NHC reason ($OLD_NOTE_LEADER $OLD_NOTE)"
+		exit 0
+	    fi
+	    echo "$0:  Marking $HOSTNAME online and clearing note ($OLD_NOTE_LEADER $OLD_NOTE)"
+
+	    set -o pipefail
+	    printf 'active node %s\nunset node comment\nset node state -= offline\n' "$HOSTNAME" | $QMGR
+	    exit $?
+	    ;;
+    esac
+    echo "$0:  Skipping $STATUS node $HOSTNAME ($OLD_NOTE_LEADER $OLD_NOTE)"
+
+
 ### Slurm
 elif [[ "$NHC_RM" == "slurm" ]]; then
     SLURM_SINFO="${SLURM_SINFO:-sinfo}"
