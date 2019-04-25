@@ -50,7 +50,7 @@ if [[ "$NHC_RM" == "pbs" ]]; then
 ### PBSPro
 elif [[ "$NHC_RM" == "pbspro" ]]; then
     PBSNODES="${PBSNODES:-pbsnodes}"
-    PBSNODES_LIST_ARGS="${PBSNODES_LIST_ARGS:--Fdsv}"
+    PBSNODES_LIST_ARGS="${PBSNODES_LIST_ARGS:--Fdsv -D'|'}"
     QMGR="${QMGR:-qmgr}"
 
     #
