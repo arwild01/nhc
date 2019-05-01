@@ -70,7 +70,7 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
     if [[ ${#LINES[@]} > 4 ]]; then
     	FIELDS=( ${LINES[4]#*= } )
 	OLD_NOTE_LEADER="${FIELDS[0]}"
-	OLD_NOTE="${LINE[*]:1}"
+	OLD_NOTE="${FIELDS[*]:1}"
     fi
 
     case "$STATUS" in
