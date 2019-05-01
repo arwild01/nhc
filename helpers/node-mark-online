@@ -49,37 +49,24 @@ if [[ "$NHC_RM" == "pbs" ]]; then
 
 ### PBSPro
 elif [[ "$NHC_RM" == "pbspro" ]]; then
-    PBSNODES="${PBSNODES:-pbsnodes}"
-    PBSNODES_LIST_ARGS="${PBSNODES_LIST_ARGS:--Fdsv}"
     QMGR="${QMGR:-qmgr}"
-
-    #
-    # PBSPro 13.x and newer with -Fdsv produces all node information in a
-    # deliminator seperated value format.  Default deliminator is a pipe
-    # character.
-    #
-    IFS='|'
-    FIELDS=( $($PBSNODES $PBSNODES_LIST_ARGS $HOSTNAME) )
-    IFS=$' \t\n'
 
     STATUS=
     OLD_NOTE_LEADER=
     OLD_NOTE=
 
-    for (( i=0; $i < ${#FIELDS[@]}; i++ )); {
-	if [[ "${FIELDS[i]%%=*}" == state ]]; then
-		STATUS="${FIELDS[i]#*=}"
+    IFS=$'\n'
+    LINES=( $(printf 'active node %s\nl n state\nl n comment\n' "$HOSTNAME" |qmgr) )
+    IFS=$' \t\n'
 
-	elif [[ "${FIELDS[i]%%=*}" == comment ]]; then
-		LINE=( ${FIELDS[i]#*=} )
-		OLD_NOTE_LEADER="${LINE[0]}"
-		OLD_NOTE="${LINE[*]:1}"
-	fi
+    FIELDS=( ${LINES[2]} )
+    STATUS=${FIELDS[*]:2}
 
-	if [[ -n "$STATUS" ]] && [[ -n "$OLD_NOTE_LEADER" ]]; then
-		break
-	fi
-    }
+    if [[ ${#LINES[@]} > 4 ]]; then
+    	FIELDS=( ${LINES[4]#*= } )
+	OLD_NOTE_LEADER="${FIELDS[0]}"
+	OLD_NOTE="${LINE[*]:1}"
+    fi
 
     case "$STATUS" in
 	*offline*)
