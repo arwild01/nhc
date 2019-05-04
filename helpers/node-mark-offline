@@ -61,7 +61,7 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
     OLD_NOTE=
 
     IFS=$'\n'
-    LINES=( $(printf 'active node %s\nl n state\nl n comment\n' "$HOSTNAME" |qmgr) )
+    LINES=( $(printf 'active node %s\nl n state\nl n comment\n' "$HOSTNAME" | "$QMGR") )
     IFS=$' \t\n'
 
     FIELDS=( ${LINES[2]} )
@@ -94,7 +94,7 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
     echo "$0:  Marking $STATUS $HOSTNAME offline:  $LEADER $NOTE"
 
     set -o pipefail
-    printf 'active node %s\nset node state += offline\nset node comment = "%s"\n' "$HOSTNAME" "$LEADER $NOTE" | $QMGR
+    printf 'active node %s\nset node state += offline\nset node comment = '"'"'%s'"'"'\n' "$HOSTNAME" "$LEADER $NOTE" | "$QMGR"
     exit $?
 
 

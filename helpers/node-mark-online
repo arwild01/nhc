@@ -56,7 +56,7 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
     OLD_NOTE=
 
     IFS=$'\n'
-    LINES=( $(printf 'active node %s\nl n state\nl n comment\n' "$HOSTNAME" |qmgr) )
+    LINES=( $(printf 'active node %s\nl n state\nl n comment\n' "$HOSTNAME" | "$QMGR") )
     IFS=$' \t\n'
 
     FIELDS=( ${LINES[2]} )
@@ -83,7 +83,7 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
 	    echo "$0:  Marking $HOSTNAME online and clearing note ($OLD_NOTE_LEADER $OLD_NOTE)"
 
 	    set -o pipefail
-	    printf 'active node %s\nunset node comment\nset node state -= offline\n' "$HOSTNAME" | $QMGR
+	    printf 'active node %s\nunset node comment\nset node state -= offline\n' "$HOSTNAME" | "$QMGR"
 	    exit $?
 	    ;;
     esac
