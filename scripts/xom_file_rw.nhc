@@ -1,0 +1,25 @@
+# XOM NHC - File Checks
+#
+# Alan wild <alan.r.wild@exxonmobil.com>
+# 14 May 2019
+#
+
+function check_fs_rw() {
+
+	local FS
+	for FS; {
+		local filename="$FS/check_fs_rw.$$.$RANDOM"
+
+		if : >"$filename"; then
+			if rm -f "$filename"; then
+				:
+			else
+				die 1 "$FUNCNAME: failed to rm $filename"
+			fi
+		else
+			die 1 "$FUNCNAME: $FS is not writeable"
+		fi
+	}
+
+	return 0
+}
