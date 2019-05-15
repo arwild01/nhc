@@ -69,8 +69,13 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
 
     if [[ ${#LINES[@]} > 4 ]]; then
     	FIELDS=( ${LINES[4]#*= } )
-	OLD_NOTE_LEADER="${FIELDS[0]}"
-	OLD_NOTE="${FIELDS[*]:1}"
+	if [[ "${FIELDS[*]}" == "node down: communication closed" ]]; then
+		OLD_NOTE_LEADER="$LEADER"
+		OLD_NOTE="${FIELDS[*]}"
+	else
+		OLD_NOTE_LEADER="${FIELDS[0]}"
+		OLD_NOTE="${FIELDS[*]:1}"
+	fi
     fi
 
     case "$STATUS" in
