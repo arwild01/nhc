@@ -50,47 +50,73 @@ if [[ "$NHC_RM" == "pbs" ]]; then
 ### PBSPro
 elif [[ "$NHC_RM" == "pbspro" ]]; then
     QMGR="${QMGR:-qmgr}"
+    QMGR_CMD=( "active node $HOSTNAME" )
 
-    STATUS=
-    OLD_NOTE_LEADER=
-    OLD_NOTE=
+    if [[ -n "$NODE_STATUS" ]]; then
+        STATUS="$NODE_STATUS"
+    else
+        STATUS=
+	QMGR_CMD+=( 'l n state' )
+    fi
 
-    IFS=$'\n'
-    LINES=( $(printf 'active node %s\nl n state\nl n comment\n' "$HOSTNAME" | "$QMGR") )
-    IFS=$' \t\n'
+    if [[ -n "$NODE_NOTE" ]]; then
+        FIELDS=( $NODE_NOTE )
+        if [[ "${FIELDS[*]}" == "node down: communication closed" ]]; then
+            OLD_NOTE_LEADER="$LEADER"
+            OLD_NOTE="${FIELDS[*]}"
+        else
+            OLD_NOTE_LEADER="${FIELDS[0]}"
+            OLD_NOTE="${FIELDS[*]:1}"
+       fi
+    else
+        OLD_NOTE_LEADER=
+        OLD_NOTE=
+	QMGR_CMD+=( 'l n comment' )
+    fi
 
-    FIELDS=( ${LINES[2]} )
-    STATUS=${FIELDS[*]:2}
+    if (( ${#QMGR_CMD[@]} > 1 )); then
+        IFS=$'\n'
+        LINES=( $(echo "${QMGR_CMD[*]}" | "$QMGR") )
+        IFS=$' \t\n'
 
-    if [[ ${#LINES[@]} > 4 ]]; then
-    	FIELDS=( ${LINES[4]#*= } )
-	if [[ "${FIELDS[*]}" == "node down: communication closed" ]]; then
-		OLD_NOTE_LEADER="$LEADER"
-		OLD_NOTE="${FIELDS[*]}"
-	else
-		OLD_NOTE_LEADER="${FIELDS[0]}"
-		OLD_NOTE="${FIELDS[*]:1}"
-	fi
+        if [[ -n "$STATUS" ]]; then
+            NOTE_OFFSET=2
+        else 
+            NOTE_OFFSET=4
+            FIELDS=( ${LINES[2]} )
+            STATUS=${FIELDS[*]:2}
+        fi
+
+        if [[ ${#LINES[@]} > $NOTE_OFFSET ]]; then
+            FIELDS=( ${LINES[$NOTE_OFFSET]#*= } )
+            if [[ "${FIELDS[*]}" == "node down: communication closed" ]]; then
+                OLD_NOTE_LEADER="$LEADER"
+                OLD_NOTE="${FIELDS[*]}"
+            else
+                OLD_NOTE_LEADER="${FIELDS[0]}"
+                OLD_NOTE="${FIELDS[*]:1}"
+            fi
+        fi
     fi
 
     case "$STATUS" in
-	*offline*)
-	    # If there is no old note, and we've not been told to ignore that, do not online the node.
-	    if [[ -z "$OLD_NOTE_LEADER" && "$IGNORE_EMPTY_NOTE" != "1" ]]; then
-		echo "$0:  Not onlining $HOSTNAME:  No note set."
-		exit 0
-	    fi
-	    # If there IS an old note, but it wasn't set by NHC, do not online the node.
-	    if [[ -n "$OLD_NOTE_LEADER" && "$OLD_NOTE_LEADER" != "$LEADER" ]]; then
-		echo "$0:  Not onlining $HOSTNAME:  Offline for non-NHC reason ($OLD_NOTE_LEADER $OLD_NOTE)"
-		exit 0
-	    fi
-	    echo "$0:  Marking $HOSTNAME online and clearing note ($OLD_NOTE_LEADER $OLD_NOTE)"
+        *offline*)
+            # If there is no old note, and we've not been told to ignore that, do not online the node.
+            if [[ -z "$OLD_NOTE_LEADER" && "$IGNORE_EMPTY_NOTE" != "1" ]]; then
+                echo "$0:  Not onlining $HOSTNAME:  No note set."
+                exit 0
+            fi
+            # If there IS an old note, but it wasn't set by NHC, do not online the node.
+            if [[ -n "$OLD_NOTE_LEADER" && "$OLD_NOTE_LEADER" != "$LEADER" ]]; then
+                echo "$0:  Not onlining $HOSTNAME:  Offline for non-NHC reason ($OLD_NOTE_LEADER $OLD_NOTE)"
+                exit 0
+            fi
+            echo "$0:  Marking $HOSTNAME online and clearing note ($OLD_NOTE_LEADER $OLD_NOTE)"
 
-	    set -o pipefail
-	    printf 'active node %s\nunset node comment\nset node state -= offline\n' "$HOSTNAME" | "$QMGR"
-	    exit $?
-	    ;;
+            set -o pipefail
+            printf 'active node %s\nunset node comment\nset node state -= offline\n' "$HOSTNAME" | "$QMGR"
+            exit $?
+            ;;
     esac
     echo "$0:  Skipping $STATUS node $HOSTNAME ($OLD_NOTE_LEADER $OLD_NOTE)"
 
