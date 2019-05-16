@@ -105,7 +105,7 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
     fi
 
     case "$STATUS" in
-        *down*|*offline*|*unknown*)
+        *down*|*offline*|*unknown*|*Stale*)
             if [[ "${STATUS/offline}" != "${STATUS}" ]]; then
                 # If the node is already offline, and there is no old note, and
                 # we've not been told to ignore that, do not touch the node.
