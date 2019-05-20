@@ -50,53 +50,45 @@ if [[ "$NHC_RM" == "pbs" ]]; then
 ### PBSPro
 elif [[ "$NHC_RM" == "pbspro" ]]; then
     QMGR="${QMGR:-qmgr}"
-    QMGR_CMD=( "active node $HOSTNAME" )
+    QMGR_STATUS=
+    QMGR_NOTE=
 
-    if [[ -n "$NODE_STATUS" ]]; then
-        STATUS="$NODE_STATUS"
-    else
-        STATUS=
-	QMGR_CMD+=( 'l n state' )
-    fi
-
-    if [[ -n "$NODE_NOTE" ]]; then
-        FIELDS=( $NODE_NOTE )
-        if [[ "${FIELDS[*]}" == "node down: communication closed" ]]; then
-            OLD_NOTE_LEADER="$LEADER"
-            OLD_NOTE="${FIELDS[*]}"
-        else
-            OLD_NOTE_LEADER="${FIELDS[0]}"
-            OLD_NOTE="${FIELDS[*]:1}"
-       fi
-    else
-        OLD_NOTE_LEADER=
-        OLD_NOTE=
-	QMGR_CMD+=( 'l n comment' )
-    fi
-
-    if (( ${#QMGR_CMD[@]} > 1 )); then
+    if [[ -z "$NODE_STATUS" ]] || [[ -z "$NODE_NOTE" ]]; then
         IFS=$'\n'
-        LINES=( $(echo "${QMGR_CMD[*]}" | "$QMGR") )
+        RAW_QMGR=( $(qmgr -c "list node $HOSTNAME") )
         IFS=$' \t\n'
 
-        if [[ -n "$STATUS" ]]; then
-            NOTE_OFFSET=2
-        else 
-            NOTE_OFFSET=4
-            FIELDS=( ${LINES[2]} )
-            STATUS=${FIELDS[*]:2}
-        fi
+        let -i f=0
+        FINAL_QMGR=()
 
-        if [[ ${#LINES[@]} > $NOTE_OFFSET ]]; then
-            FIELDS=( ${LINES[$NOTE_OFFSET]#*= } )
-            if [[ "${FIELDS[*]}" == "node down: communication closed" ]]; then
-                OLD_NOTE_LEADER="$LEADER"
-                OLD_NOTE="${FIELDS[*]}"
-            else
-                OLD_NOTE_LEADER="${FIELDS[0]}"
-                OLD_NOTE="${FIELDS[*]:1}"
+	# "list node" output may wrap lines... we need to concatenate any
+	# line that begins with tab on tot the end of the preceeding line
+        for (( i=0; i<=${#RAW_QMGR[@]}; i++ )); {
+            if [[ "${RAW_QMGR[$i]/#$'\t'}" == "${RAW_QMGR[$i]}" ]]; then
+                let f++
             fi
-        fi
+            FINAL_QMGR[$f]+=${RAW_QMGR[$i]/#$'\t'}
+        }
+
+	#extract node status and comment
+        for (( i=0; i<=${#FINAL_QMGR[@]}; i++ )); {
+            case ${FINAL_QMGR[$i]} in
+		*state\ =\ *) QMGR_STATUS=${FINAL_QMGR[$i]#*state = };;
+                *comment\ =\ *) QMGR_NOTE=${FINAL_QMGR[$i]#*comment = };;
+            esac
+        }
+
+    fi
+
+    STATUS="${NODE_STATUS:-$QMGR_STATUS}"
+    FIELDS=( ${NODE_NOTE:-$QMGR_NOTE} )
+
+    if [[ "${FIELDS[*]}" == "node down: communication closed" ]]; then
+        OLD_NOTE_LEADER="$LEADER"
+        OLD_NOTE="${FIELDS[*]}"
+    else
+        OLD_NOTE_LEADER="${FIELDS[0]}"
+        OLD_NOTE="${FIELDS[*]:1}"
     fi
 
     case "$STATUS" in
@@ -114,7 +106,7 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
             echo "$0:  Marking $HOSTNAME online and clearing note ($OLD_NOTE_LEADER $OLD_NOTE)"
 
             set -o pipefail
-            printf 'active node %s\nunset node comment\nset node state -= offline\n' "$HOSTNAME" | "$QMGR"
+            echo -e 'unset node '"$HOSTNAME"' comment\n' 'set node '"$HOSTNAME"' state -= offline\n' | "$QMGR"
             exit $?
             ;;
     esac
