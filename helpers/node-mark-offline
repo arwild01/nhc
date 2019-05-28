@@ -60,7 +60,7 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
 
     if [[ -z "$NODE_STATUS" ]] || [[ -z "$NODE_NOTE" ]]; then
         IFS=$'\n'
-        RAW_QMGR=( $(qmgr -c "list node $HOSTNAME") )
+        RAW_QMGR=( $("$QMGR" -c "list node $HOSTNAME") )
         IFS=$' \t\n'
 
         let -i f=0
