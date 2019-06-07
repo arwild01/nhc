@@ -1,5 +1,5 @@
 AC_PREREQ(2.59)
-AC_INIT([lbnl-nhc], [1.4.2.12xom], [hpc.systems.support@exxonmobil.com])
+AC_INIT([lbnl-nhc], [1.4.2.13xom], [hpc.systems.support@exxonmobil.com])
 AC_CONFIG_SRCDIR([.])
 
 AC_PROG_INSTALL
