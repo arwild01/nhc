@@ -56,7 +56,12 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
     if [[ -z "$NODE_STATUS" ]] || [[ -z "$NODE_NOTE" ]]; then
         IFS=$'\n'
         RAW_QMGR=( $("$QMGR" -c "list node $HOSTNAME") )
+	qmgr_exit=$?
         IFS=$' \t\n'
+
+	if (( $qmgr_exit )); then
+		exit $qmgr_exit
+	fi
 
         let -i f=0
         FINAL_QMGR=()
