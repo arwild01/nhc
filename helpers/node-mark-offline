@@ -54,7 +54,7 @@ if [[ "$NHC_RM" == "pbs" ]]; then
 
 ### PBSPro
 elif [[ "$NHC_RM" == "pbspro" ]]; then
-    QMGR="${QMGR:-qmgr}"
+    QMGR="${QMGR:-/opt/pbs/bin/qmgr}"
     QMGR_STATUS=
     QMGR_NOTE=
 
