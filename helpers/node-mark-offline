@@ -122,7 +122,7 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
     echo "$0:  Marking $STATUS $HOSTNAME offline:  $LEADER $NOTE"
 
     set -o pipefail
-    echo -e 'set node '"$HOSTNAME"' state+=offline\n' 'set node '"$HOSTNAME"' comment = '"'$LEADER $NOTE'"'\n' | "$QMGR"
+    echo -e 'set node '"$HOSTNAME"' comment = '"'$LEADER $NOTE'"'\n' 'set node '"$HOSTNAME"' state+=offline\n' | "$QMGR"
     exit $?
 
 
