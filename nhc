@@ -171,7 +171,6 @@ function kill_watchdog() {
         done
         kill -s KILL -- -$WATCHDOG_PID $WATCHDOG_PID 2>/dev/null
     fi
-    WATCHDOG_PID=0
     return 0
 }
 
@@ -635,7 +634,11 @@ function nhcmain_run_checks() {
 
 function nhcmain_mark_online() {
     if [[ -n "$NHC_RM" && "$MARK_OFFLINE" -eq 1 ]]; then
-        eval $ONLINE_NODE "'$HOSTNAME'"
+        if [[ "$NHC_RM" == "pbspro" ]]; then
+            eval setsid $ONLINE_NODE "'$HOSTNAME'"
+	else
+            eval $ONLINE_NODE "'$HOSTNAME'"
+	fi
     fi
 }
 
@@ -700,7 +703,6 @@ else
     nhcmain_load_scripts
     nhcmain_set_watchdog
     nhcmain_run_checks
-    kill_watchdog
     nhcmain_mark_online
     nhcmain_finish
 fi
