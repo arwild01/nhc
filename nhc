@@ -171,6 +171,7 @@ function kill_watchdog() {
         done
         kill -s KILL -- -$WATCHDOG_PID $WATCHDOG_PID 2>/dev/null
     fi
+    WATCHDOG_PID=0
     return 0
 }
 
@@ -699,6 +700,7 @@ else
     nhcmain_load_scripts
     nhcmain_set_watchdog
     nhcmain_run_checks
+    kill_watchdog
     nhcmain_mark_online
     nhcmain_finish
 fi
