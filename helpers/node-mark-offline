@@ -109,15 +109,16 @@ elif [[ "$NHC_RM" == "pbspro" ]]; then
                 echo "$0:  Not offlining $HOSTNAME:  Already offline with no note set."
                 exit 0
             fi
-            # If there's an old note that wasn't set by NHC, preserve it.
+
             if [[ -n "$OLD_NOTE_LEADER" ]]; then
                 if [[ "$OLD_NOTE_LEADER" != "$LEADER" ]]; then
-                    LEADER="$OLD_NOTE_LEADER"
-                    NOTE="$OLD_NOTE"
-                elif [[ "${NODE_NTOE:-$QMGR_NOTE}" == "$LEADER $NOTE" ]]; then
-                    echo "$0:  Skipping $STATUS node $HOSTNAME (already offline & NOTE is unchanged... $OLD_NOTE_LEADER $OLD_NOTE)"
-                    exit 0
+                    # If there's an old note that wasn't set by NHC, preserve it.
+                    echo "$0:  Skipping $STATUS node $HOSTNAME (offline w/ non-NHC note: $OLD_NOTE_LEADER $OLD_NOTE)"
+                elif [[ "${NODE_NOTE:-$QMGR_NOTE}" == "$LEADER $NOTE" ]]; then
+                    # If we aren't changing the note... send anything to the server
+                    echo "$0:  Skipping $STATUS node $HOSTNAME (offline w/ unchanged note: $OLD_NOTE_LEADER $OLD_NOTE)"
                 fi
+                exit 0
             fi
             ;;
         *down*|*unknown*|*Stale*)
