@@ -185,6 +185,10 @@ function nhcmain_init_env() {
     then
         SYSCONFIGDIR="/etc/default"
         LIBEXECDIR="/usr/lib"
+    elif [ -f /etc/SuSE-release ]
+    then
+        SYSCONFIGDIR="/etc/sysconfig"
+        LIBEXECDIR="/usr/lib"
     else
         SYSCONFIGDIR="/etc/sysconfig"
         LIBEXECDIR="/usr/libexec"
